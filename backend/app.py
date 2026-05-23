@@ -8,6 +8,13 @@ CORS(app, origins=[
     "https://estoque-final-andv3d326-mkcompany01.vercel.app"
 ])
 
+@app.route("/")
+def home():
+    return "API online"
+
+if __name__ == "__main__":
+    app.run()
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "estoque.db"))
 
