@@ -3,12 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  html {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
-
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
   ::-webkit-scrollbar       { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #2a2a35; border-radius: 9999px; }

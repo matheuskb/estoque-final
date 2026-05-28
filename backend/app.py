@@ -4,27 +4,25 @@ import sqlite3
 import os
 
 app = Flask(__name__)
-CORS(app, origins=[
-    "https://estoque-final-andv3d326-mkcompany01.vercel.app"
-])
-
-@app.route("/")
-def home():
-    return "API online"
-
-if __name__ == "__main__":
-    app.run()
+CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "estoque.db"))
 
-CATEGORIAS = [
+CATEGORIAS_ROUPAS = [
     "OVERSIZED BRASIL",
     "OVERSIZED NORMAL",
     "CONJUNTO NIKE TEECH",
     "CONJUNTO FINO LACOSTE",
     "CONJUNTO FINO NIKE",
     "Camisa Tricô gola polo Zara",
+]
+
+CATEGORIAS_PERFUMES = [
+    "IMPORTADO MASCULINO",
+    "IMPORTADO FEMININO",
+    "ARABE MASCULINO",
+    "ARABE FEMININO",
 ]
 
 # ──────────────────────────────────────────────────────────
@@ -37,19 +35,32 @@ def get_conn() -> sqlite3.Connection:
 
 def iniciar_banco() -> None:
     with get_conn() as conn:
+        # Tabela de roupas (mantém cor e tamanho)
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS produtos (
+            CREATE TABLE IF NOT EXISTS roupas (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome       TEXT    NOT NULL,
                 categoria  TEXT    NOT NULL,
                 cor        TEXT    NOT NULL,
                 tamanho    TEXT    NOT NULL,
                 preco      REAL    NOT NULL,
-                quantidade INTEGER NOT NULL
+                quantidade INTEGER NOT NULL,
+                created_at TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
+            )
+        """)
+        # Tabela de perfumes (sem cor e tamanho)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS perfumes (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome       TEXT    NOT NULL,
+                categoria  TEXT    NOT NULL,
+                preco      REAL    NOT NULL,
+                quantidade INTEGER NOT NULL,
+                created_at TEXT    NOT NULL DEFAULT (datetime('now','localtime'))
             )
         """)
 
-def to_dict(row: sqlite3.Row) -> dict:
+def roupa_dict(row: sqlite3.Row) -> dict:
     return {
         "id":         row["id"],
         "nome":       row["nome"],
@@ -59,92 +70,21 @@ def to_dict(row: sqlite3.Row) -> dict:
         "preco":      row["preco"],
         "quantidade": row["quantidade"],
         "total":      round(row["preco"] * row["quantidade"], 2),
+        "created_at": row["created_at"],
     }
 
-# ──────────────────────────────────────────────────────────
-# Rotas
-# ──────────────────────────────────────────────────────────
-@app.route("/api/health")
-def health():
-    return jsonify({"status": "ok"})
+def perfume_dict(row: sqlite3.Row) -> dict:
+    return {
+        "id":         row["id"],
+        "nome":       row["nome"],
+        "categoria":  row["categoria"],
+        "preco":      row["preco"],
+        "quantidade": row["quantidade"],
+        "total":      round(row["preco"] * row["quantidade"], 2),
+        "created_at": row["created_at"],
+    }
 
-
-@app.route("/api/categorias")
-def listar_categorias():
-    return jsonify(CATEGORIAS)
-
-
-@app.route("/api/produtos")
-def listar_produtos():
-    with get_conn() as conn:
-        rows = conn.execute(
-            "SELECT * FROM produtos ORDER BY categoria, nome"
-        ).fetchall()
-    return jsonify([to_dict(r) for r in rows])
-
-
-@app.route("/api/produtos", methods=["POST"])
-def criar_produto():
-    data = request.get_json(force=True)
-    campos = ["nome", "categoria", "cor", "tamanho", "preco", "quantidade"]
-    for c in campos:
-        if not str(data.get(c, "")).strip():
-            return jsonify({"error": f"Campo '{c}' obrigatório"}), 400
-
-    with get_conn() as conn:
-        cur = conn.execute(
-            "INSERT INTO produtos (nome,categoria,cor,tamanho,preco,quantidade)"
-            " VALUES (?,?,?,?,?,?)",
-            (
-                data["nome"].strip(), data["categoria"].strip(),
-                data["cor"].strip(),  data["tamanho"].strip(),
-                float(data["preco"]), int(data["quantidade"]),
-            ),
-        )
-        row = conn.execute(
-            "SELECT * FROM produtos WHERE id=?", (cur.lastrowid,)
-        ).fetchone()
-    return jsonify(to_dict(row)), 201
-
-
-@app.route("/api/produtos/<int:pid>/vender", methods=["PATCH"])
-def vender_produto(pid: int):
-    with get_conn() as conn:
-        row = conn.execute(
-            "SELECT * FROM produtos WHERE id=?", (pid,)
-        ).fetchone()
-        if not row:
-            return jsonify({"error": "Não encontrado"}), 404
-
-        if row["quantidade"] > 1:
-            conn.execute(
-                "UPDATE produtos SET quantidade=quantidade-1 WHERE id=?", (pid,)
-            )
-            updated = conn.execute(
-                "SELECT * FROM produtos WHERE id=?", (pid,)
-            ).fetchone()
-            return jsonify(to_dict(updated))
-
-        conn.execute("DELETE FROM produtos WHERE id=?", (pid,))
-        return jsonify({"deleted": True, "id": pid})
-
-
-@app.route("/api/produtos/<int:pid>", methods=["DELETE"])
-def deletar_produto(pid: int):
-    with get_conn() as conn:
-        if not conn.execute(
-            "SELECT id FROM produtos WHERE id=?", (pid,)
-        ).fetchone():
-            return jsonify({"error": "Não encontrado"}), 404
-        conn.execute("DELETE FROM produtos WHERE id=?", (pid,))
-    return jsonify({"deleted": True, "id": pid})
-
-
-@app.route("/api/dashboard")
-def dashboard():
-    with get_conn() as conn:
-        rows = conn.execute("SELECT * FROM produtos").fetchall()
-
+def dashboard_stats(rows, dict_fn):
     total_valor = sum(r["preco"] * r["quantidade"] for r in rows)
     por_cat: dict[str, dict] = {}
     for r in rows:
@@ -153,18 +93,147 @@ def dashboard():
             por_cat[cat] = {"qtd": 0, "valor": 0.0}
         por_cat[cat]["qtd"]   += r["quantidade"]
         por_cat[cat]["valor"] += r["preco"] * r["quantidade"]
-
-    return jsonify({
+    return {
         "total_produtos": len(rows),
         "total_pecas":    sum(r["quantidade"] for r in rows),
         "total_valor":    round(total_valor, 2),
-        "estoque_baixo":  [to_dict(r) for r in rows if r["quantidade"] <= 3],
+        "estoque_baixo":  [dict_fn(r) for r in rows if r["quantidade"] <= 3],
         "por_categoria": [
             {"categoria": k, "qtd": v["qtd"], "valor": round(v["valor"], 2)}
             for k, v in sorted(por_cat.items())
         ],
-    })
+    }
 
+# ──────────────────────────────────────────────────────────
+# Rotas gerais
+# ──────────────────────────────────────────────────────────
+@app.route("/api/health")
+def health():
+    return jsonify({"status": "ok"})
+
+@app.route("/api/categorias/roupas")
+def categorias_roupas():
+    return jsonify(CATEGORIAS_ROUPAS)
+
+@app.route("/api/categorias/perfumes")
+def categorias_perfumes():
+    return jsonify(CATEGORIAS_PERFUMES)
+
+# ──────────────────────────────────────────────────────────
+# ROUPAS
+# ──────────────────────────────────────────────────────────
+@app.route("/api/roupas")
+def listar_roupas():
+    with get_conn() as conn:
+        rows = conn.execute("SELECT * FROM roupas ORDER BY categoria, nome").fetchall()
+    return jsonify([roupa_dict(r) for r in rows])
+
+@app.route("/api/roupas", methods=["POST"])
+def criar_roupa():
+    data = request.get_json(force=True)
+    for campo in ["nome", "categoria", "cor", "tamanho", "preco", "quantidade"]:
+        if not str(data.get(campo, "")).strip():
+            return jsonify({"error": f"Campo '{campo}' obrigatório"}), 400
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO roupas (nome,categoria,cor,tamanho,preco,quantidade) VALUES (?,?,?,?,?,?)",
+            (data["nome"].strip(), data["categoria"].strip(),
+             data["cor"].strip(), data["tamanho"].strip(),
+             float(data["preco"]), int(data["quantidade"])),
+        )
+        row = conn.execute("SELECT * FROM roupas WHERE id=?", (cur.lastrowid,)).fetchone()
+    return jsonify(roupa_dict(row)), 201
+
+@app.route("/api/roupas/<int:pid>/vender", methods=["PATCH"])
+def vender_roupa(pid: int):
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM roupas WHERE id=?", (pid,)).fetchone()
+        if not row:
+            return jsonify({"error": "Não encontrado"}), 404
+        if row["quantidade"] > 1:
+            conn.execute("UPDATE roupas SET quantidade=quantidade-1 WHERE id=?", (pid,))
+            updated = conn.execute("SELECT * FROM roupas WHERE id=?", (pid,)).fetchone()
+            return jsonify(roupa_dict(updated))
+        conn.execute("DELETE FROM roupas WHERE id=?", (pid,))
+        return jsonify({"deleted": True, "id": pid})
+
+@app.route("/api/roupas/<int:pid>", methods=["DELETE"])
+def deletar_roupa(pid: int):
+    with get_conn() as conn:
+        if not conn.execute("SELECT id FROM roupas WHERE id=?", (pid,)).fetchone():
+            return jsonify({"error": "Não encontrado"}), 404
+        conn.execute("DELETE FROM roupas WHERE id=?", (pid,))
+    return jsonify({"deleted": True, "id": pid})
+
+@app.route("/api/roupas/dashboard")
+def dashboard_roupas():
+    with get_conn() as conn:
+        rows = conn.execute("SELECT * FROM roupas").fetchall()
+    return jsonify(dashboard_stats(rows, roupa_dict))
+
+# ──────────────────────────────────────────────────────────
+# PERFUMES
+# ──────────────────────────────────────────────────────────
+@app.route("/api/perfumes")
+def listar_perfumes():
+    with get_conn() as conn:
+        rows = conn.execute("SELECT * FROM perfumes ORDER BY categoria, nome").fetchall()
+    return jsonify([perfume_dict(r) for r in rows])
+
+@app.route("/api/perfumes", methods=["POST"])
+def criar_perfume():
+    data = request.get_json(force=True)
+    for campo in ["nome", "categoria", "preco", "quantidade"]:
+        if not str(data.get(campo, "")).strip():
+            return jsonify({"error": f"Campo '{campo}' obrigatório"}), 400
+    with get_conn() as conn:
+        cur = conn.execute(
+            "INSERT INTO perfumes (nome,categoria,preco,quantidade) VALUES (?,?,?,?)",
+            (data["nome"].strip(), data["categoria"].strip(),
+             float(data["preco"]), int(data["quantidade"])),
+        )
+        row = conn.execute("SELECT * FROM perfumes WHERE id=?", (cur.lastrowid,)).fetchone()
+    return jsonify(perfume_dict(row)), 201
+
+@app.route("/api/perfumes/<int:pid>/vender", methods=["PATCH"])
+def vender_perfume(pid: int):
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM perfumes WHERE id=?", (pid,)).fetchone()
+        if not row:
+            return jsonify({"error": "Não encontrado"}), 404
+        if row["quantidade"] > 1:
+            conn.execute("UPDATE perfumes SET quantidade=quantidade-1 WHERE id=?", (pid,))
+            updated = conn.execute("SELECT * FROM perfumes WHERE id=?", (pid,)).fetchone()
+            return jsonify(perfume_dict(updated))
+        conn.execute("DELETE FROM perfumes WHERE id=?", (pid,))
+        return jsonify({"deleted": True, "id": pid})
+
+@app.route("/api/perfumes/<int:pid>", methods=["DELETE"])
+def deletar_perfume(pid: int):
+    with get_conn() as conn:
+        if not conn.execute("SELECT id FROM perfumes WHERE id=?", (pid,)).fetchone():
+            return jsonify({"error": "Não encontrado"}), 404
+        conn.execute("DELETE FROM perfumes WHERE id=?", (pid,))
+    return jsonify({"deleted": True, "id": pid})
+
+@app.route("/api/perfumes/dashboard")
+def dashboard_perfumes():
+    with get_conn() as conn:
+        rows = conn.execute("SELECT * FROM perfumes").fetchall()
+    return jsonify(dashboard_stats(rows, perfume_dict))
+
+# ──────────────────────────────────────────────────────────
+# Dashboard geral (ambos os módulos)
+# ──────────────────────────────────────────────────────────
+@app.route("/api/dashboard")
+def dashboard_geral():
+    with get_conn() as conn:
+        roupas   = conn.execute("SELECT * FROM roupas").fetchall()
+        perfumes = conn.execute("SELECT * FROM perfumes").fetchall()
+    return jsonify({
+        "roupas":   dashboard_stats(roupas, roupa_dict),
+        "perfumes": dashboard_stats(perfumes, perfume_dict),
+    })
 
 # ──────────────────────────────────────────────────────────
 if __name__ == "__main__":

@@ -1,12 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Toaster } from "react-hot-toast";
-import Dashboard from "./pages/Dashboard";
+import App from "./pages/App";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <Dashboard />
+    <App />
     <Toaster
       position="bottom-right"
       gutter={8}
@@ -19,7 +19,6 @@ createRoot(document.getElementById("root")!).render(
           borderRadius: "10px",
           fontSize: "13px",
           fontFamily: "Inter, sans-serif",
-          letterSpacing: "-0.01em",
           padding: "10px 14px",
           boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
         },
