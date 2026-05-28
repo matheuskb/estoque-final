@@ -4,8 +4,13 @@ import type { NovaRoupa } from "../types";
 import { Button, Input, Label, Select } from "./ui";
 
 const CATEGORIAS = [
-  "OVERSIZED BRASIL", "OVERSIZED NORMAL", "CONJUNTO NIKE TEECH",
-  "CONJUNTO FINO LACOSTE", "CONJUNTO FINO NIKE", "Camisa Tricô gola polo Zara",
+  "OVERSIZED BRASIL",
+  "OVERSIZED NORMAL",
+  "CONJUNTO NIKE TEECH",
+  "CONJUNTO FINO LACOSTE",
+  "CONJUNTO FINO NIKE",
+  "CALÇA FEMININA",
+  "CALÇA MASCULINA",
 ];
 
 const EMPTY: NovaRoupa = { nome: "", categoria: CATEGORIAS[0], cor: "", tamanho: "", preco: "", quantidade: "" };
