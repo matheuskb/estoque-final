@@ -9,7 +9,8 @@ const CATEGORIAS = [
   "CONJUNTO NIKE TEECH",
   "CONJUNTO FINO LACOSTE",
   "CONJUNTO FINO NIKE",
-  "Camisa Tricô gola polo Zara",
+  "CALÇA FEMININA",
+  "CALÇA MASCULINA",
 ];
 
 const EMPTY: NovoProduto = {
