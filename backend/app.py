@@ -232,6 +232,15 @@ def listar_entradas():
         rows = conn.execute(q,params).fetchall()
     return jsonify([entrada_dict(r) for r in rows])
 
+
+@app.route("/api/entradas/<int:pid>", methods=["DELETE"])
+def deletar_entrada(pid):
+    with get_conn() as conn:
+        if not conn.execute("SELECT id FROM entradas WHERE id=?",(pid,)).fetchone():
+            return jsonify({"error":"Nao encontrado"}),404
+        conn.execute("DELETE FROM entradas WHERE id=?",(pid,))
+    return jsonify({"deleted":True,"id":pid})
+
 # ── FINANCEIRO RESUMO ──
 @app.route("/api/financeiro/<modulo>")
 def financeiro(modulo):

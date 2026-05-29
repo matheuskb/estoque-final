@@ -64,6 +64,12 @@ export function useFinanceiro(modulo: string) {
     toast.success("Investimento removido");
   }, [loadInv, loadStats]);
 
+  const deletarEntrada = useCallback(async (id: number) => {
+    await apiFinanceiro.entradas.deletar(id);
+    await Promise.all([loadEnt(), loadStats()]);
+    toast.success('Entrada removida');
+  }, [loadEnt, loadStats]);
+
   const totalInvFiltrado = investimentos.reduce((s, i) => s + i.valor, 0);
   const totalEntFiltrado = entradas.reduce((s, e) => s + e.valor, 0);
 
@@ -82,7 +88,7 @@ export function useFinanceiro(modulo: string) {
     filtroMesInv, setFiltroMesInv, filtroAnoInv, setFiltroAnoInv,
     filtroMesEnt, setFiltroMesEnt, filtroAnoEnt, setFiltroAnoEnt,
     totalInvFiltrado, totalEntFiltrado,
-    adicionarInv, editarInv, deletarInv,
+    adicionarInv, editarInv, deletarInv, deletarEntrada,
     meses, anos, mesAtual, anoAtual,
     refresh: loadAll,
   };

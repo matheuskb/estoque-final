@@ -137,7 +137,7 @@ export function Financeiro({ modulo }: { modulo: string }) {
     filtroMesInv, setFiltroMesInv, filtroAnoInv, setFiltroAnoInv,
     filtroMesEnt, setFiltroMesEnt, filtroAnoEnt, setFiltroAnoEnt,
     totalInvFiltrado, totalEntFiltrado,
-    adicionarInv, editarInv, deletarInv,
+    adicionarInv, editarInv, deletarInv, deletarEntrada,
     meses, anos,
   } = useFinanceiro(modulo);
 
@@ -305,13 +305,20 @@ export function Financeiro({ modulo }: { modulo: string }) {
                   <td className="px-4 py-3 text-tx-primary font-medium max-w-[200px] truncate">{ent.produto}</td>
                   <td className="px-4 py-3 text-right font-mono text-accent font-semibold">{brl(ent.valor)}</td>
                   <td className="px-4 py-3 text-center font-mono text-xs text-tx-secondary">{fmtData(ent.data)}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => deletarEntrada(ent.id)}
+                      className="p-1.5 rounded-md text-tx-muted hover:text-danger hover:bg-danger-muted transition-all"
+                      title="Remover entrada">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {entradas.length > 0 && (
                 <tr className="border-t-2 border-bg-muted bg-bg-raised">
                   <td className="px-4 py-3 text-2xs font-semibold uppercase tracking-widest text-tx-muted">Total filtrado</td>
                   <td className="px-4 py-3 text-right font-mono font-bold text-accent">{brl(totalEntFiltrado)}</td>
-                  <td />
+                  <td colSpan={2} />
                 </tr>
               )}
             </tbody>

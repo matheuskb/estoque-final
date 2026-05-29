@@ -8,7 +8,15 @@ import { Input, Select, SkeletonStats, StatCard } from "../components/ui";
 import { useRoupas } from "../hooks/useRoupas";
 import { brl, num } from "../utils/format";
 
-const CATEGORIAS = ["OVERSIZED BRASIL","OVERSIZED NORMAL","CONJUNTO NIKE TEECH","CONJUNTO FINO LACOSTE","CONJUNTO FINO NIKE","Camisa Tricô gola polo Zara"];
+const CATEGORIAS = [
+  "OVERSIZED BRASIL", 
+  "OVERSIZED NORMAL", 
+  "CONJUNTO NIKE TEECH",
+  "CONJUNTO FINO LACOSTE", 
+  "CONJUNTO FINO NIKE", 
+  "CALÇA JEANS FEMININA",
+  "CALÇA JEANS MASCULINA"
+];
 type Aba = "estoque" | "financeiro";
 
 export function PageRoupas() {

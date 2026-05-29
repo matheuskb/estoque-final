@@ -81,5 +81,7 @@ export const apiFinanceiro = {
       if (ano) params.set("ano", ano);
       return http.get<import("../types").Entrada[]>(`/entradas?${params}`).then(r => r.data);
     },
+    deletar: (id: number) =>
+      http.delete(`/entradas/${id}`).then(r => r.data),
   },
 };
