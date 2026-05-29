@@ -1,8 +1,11 @@
 import axios from "axios";
 import type { DashboardData, NovaRoupa, NovoPerfume, Perfume, Roupa } from "../types";
 
+// Remove barra final do VITE_API_URL para evitar //api
+const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 const http = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL ?? ""}/api`,
+  baseURL: `${BASE}/api`,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -50,4 +53,33 @@ export const apiPerfumes = {
 
   dashboard: () =>
     http.get<DashboardData>("/perfumes/dashboard").then((r) => r.data),
+};
+
+export const apiFinanceiro = {
+  stats: (modulo: string) =>
+    http.get<import("../types").FinanceiroStats>(`/financeiro/${modulo}`).then(r => r.data),
+
+  investimentos: {
+    listar: (modulo: string, mes?: string, ano?: string) => {
+      const params = new URLSearchParams({ modulo });
+      if (mes) params.set("mes", mes);
+      if (ano) params.set("ano", ano);
+      return http.get<import("../types").Investimento[]>(`/investimentos?${params}`).then(r => r.data);
+    },
+    criar: (modulo: string, form: import("../types").NovoInvestimento) =>
+      http.post<import("../types").Investimento>("/investimentos", { modulo, ...form, valor: parseFloat(form.valor) }).then(r => r.data),
+    editar: (id: number, form: import("../types").NovoInvestimento) =>
+      http.put<import("../types").Investimento>(`/investimentos/${id}`, { ...form, valor: parseFloat(form.valor) }).then(r => r.data),
+    deletar: (id: number) =>
+      http.delete(`/investimentos/${id}`).then(r => r.data),
+  },
+
+  entradas: {
+    listar: (modulo: string, mes?: string, ano?: string) => {
+      const params = new URLSearchParams({ modulo });
+      if (mes) params.set("mes", mes);
+      if (ano) params.set("ano", ano);
+      return http.get<import("../types").Entrada[]>(`/entradas?${params}`).then(r => r.data);
+    },
+  },
 };

@@ -58,3 +58,34 @@ export type SortFieldPerfume = keyof Perfume;
 
 // ── Módulo ativo ────────────────────────────────────────
 export type Modulo = "roupas" | "perfumes";
+
+// ── Financeiro ──────────────────────────────────────────
+export interface Investimento {
+  id: number;
+  modulo: string;
+  nome: string;
+  valor: number;
+  data: string;
+  created_at: string;
+}
+
+export interface NovoInvestimento {
+  nome: string;
+  valor: string;
+  data: string;
+}
+
+export interface Entrada {
+  id: number;
+  modulo: string;
+  produto: string;
+  valor: number;
+  data: string;
+  created_at: string;
+}
+
+export interface FinanceiroStats {
+  investimentos: { total: number; mes: number };
+  entradas:      { total: number; mes: number };
+  lucro:         { total: number; mes: number };
+}
