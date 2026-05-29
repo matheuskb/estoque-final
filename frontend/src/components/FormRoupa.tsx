@@ -10,7 +10,9 @@ const CATEGORIAS = [
   "CONJUNTO FINO LACOSTE", 
   "CONJUNTO FINO NIKE", 
   "CALÇA JEANS FEMININA",
-  "CALÇA JEANS MASCULINA"
+  "CALÇA JEANS MASCULINA",
+  "RIFA DE ROUPAS",
+  "IVESTIMENTO PESSOAL"
 ];
 
 const EMPTY: NovaRoupa = { nome: "", categoria: CATEGORIAS[0], cor: "", tamanho: "", preco: "", quantidade: "" };

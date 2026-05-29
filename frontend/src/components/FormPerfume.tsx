@@ -5,7 +5,7 @@ import { Button, Input, Label, Select } from "./ui";
 
 const CATEGORIAS = [
   "IMPORTADO MASCULINO", "IMPORTADO FEMININO",
-  "ARABE MASCULINO", "ARABE FEMININO",
+  "ARABE MASCULINO", "ARABE FEMININO","IVESTIMENTO PESSOAL"
 ];
 
 const EMPTY: NovoPerfume = { nome: "", categoria: CATEGORIAS[0], preco: "", quantidade: "" };

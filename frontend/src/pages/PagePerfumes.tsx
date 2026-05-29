@@ -8,7 +8,7 @@ import { Input, Select, SkeletonStats, StatCard } from "../components/ui";
 import { usePerfumes } from "../hooks/usePerfumes";
 import { brl, num } from "../utils/format";
 
-const CATEGORIAS = ["IMPORTADO MASCULINO","IMPORTADO FEMININO","ARABE MASCULINO","ARABE FEMININO"];
+const CATEGORIAS = ["IMPORTADO MASCULINO","IMPORTADO FEMININO","ARABE MASCULINO","ARABE FEMININO","IVESTIMENTO PESSOAL"];
 type Aba = "estoque" | "financeiro";
 
 export function PagePerfumes() {
